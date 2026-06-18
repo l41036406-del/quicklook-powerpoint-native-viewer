@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -21,6 +22,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
         private dynamic _app;
         private dynamic _presentation;
         private Exception _startupException;
+        private int _powerPointProcessId;
         private bool _disposed;
 
         public PowerPointRenderSession(string path, string sessionDir)
@@ -60,6 +62,21 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                 dynamic slide = _presentation.Slides[page];
                 slide.Export(outputPath, "PNG", width, height);
                 ReleaseComObject(slide);
+                return outputPath;
+            });
+        }
+
+        public string ExportPdf()
+        {
+            var outputPath = Path.Combine(_sessionDir, "preview.pdf");
+
+            if (File.Exists(outputPath))
+                return outputPath;
+
+            return Invoke(delegate
+            {
+                const int ppSaveAsPDF = 32;
+                _presentation.SaveAs(outputPath, ppSaveAsPDF, MsoFalse);
                 return outputPath;
             });
         }
@@ -107,6 +124,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                     throw new InvalidOperationException("Microsoft PowerPoint is not installed or COM registration is missing.");
 
                 _app = Activator.CreateInstance(type);
+                CapturePowerPointProcessId();
                 try
                 {
                     _app.DisplayAlerts = MsoFalse;
@@ -168,6 +186,41 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             finally
             {
                 ReleaseComObject(app);
+                EnsurePowerPointProcessClosed();
+            }
+        }
+
+        private void CapturePowerPointProcessId()
+        {
+            try
+            {
+                var hwnd = new IntPtr((int)_app.HWND);
+                int processId;
+                GetWindowThreadProcessId(hwnd, out processId);
+                _powerPointProcessId = processId;
+            }
+            catch
+            {
+                _powerPointProcessId = 0;
+            }
+        }
+
+        private void EnsurePowerPointProcessClosed()
+        {
+            if (_powerPointProcessId <= 0)
+                return;
+
+            try
+            {
+                var process = Process.GetProcessById(_powerPointProcessId);
+                if (process.WaitForExit(3000))
+                    return;
+
+                process.Kill();
+                process.WaitForExit(3000);
+            }
+            catch
+            {
             }
         }
 
@@ -199,5 +252,8 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             {
             }
         }
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out int processId);
     }
 }

@@ -10,10 +10,10 @@ This is a prototype created to test a safer preview path for PPT/PPTX files that
 
 - Handles PowerPoint formats: `.ppt`, `.pptx`, `.pptm`, `.pot`, `.potx`, `.potm`, `.pps`, `.ppsx`, `.ppsm`
 - Uses Microsoft PowerPoint COM automation to open the source presentation read-only
-- Exports the current slide to PNG and displays it in QuickLook
-- Provides previous/next page navigation
-- Pre-renders the next page in the background
-- Deletes the session image cache when the preview control unloads
+- Exports the presentation to a temporary PDF
+- Displays the PDF through WebView2, using the installed Microsoft Edge WebView2 Runtime
+- Supports PDF text selection/copy through the embedded WebView2 PDF viewer
+- Deletes the temporary PDF and WebView2 session data when the preview control unloads
 - Leaves the original PowerPoint file unchanged
 - Installs side-by-side with the original OfficeViewer plugin
 - Uses `Priority = 100` so it can take over PowerPoint files while Word/Excel remain handled by other plugins
@@ -21,10 +21,9 @@ This is a prototype created to test a safer preview path for PPT/PPTX files that
 ## Current Limitations
 
 - Requires Microsoft PowerPoint to be installed and COM-registered on Windows
-- Preview is image-based, so text selection and copying are not supported yet
-- Startup can be slower than Syncfusion because PowerPoint must be launched
+- Startup can be slower than Syncfusion because PowerPoint must be launched and a temporary PDF must be generated
 - The current implementation is a sandbox prototype, not a polished release
-- The next planned direction is `PowerPoint -> temporary PDF -> WebView2/PDF.js` to support selectable text
+- Requires Microsoft Edge WebView2 Runtime, which is usually already installed on modern Windows systems
 
 ## Startup Loading Screen
 
@@ -32,7 +31,7 @@ When the plugin launches PowerPoint, QuickLook may show this black loading page:
 
 ![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
 
-This screen is expected during startup. It indicates that the plugin is starting PowerPoint and preparing the first rendered slide.
+This screen is expected during startup. It indicates that the plugin is starting PowerPoint and generating the temporary PDF preview.
 
 ## Install
 
@@ -62,12 +61,20 @@ The original OfficeViewer plugin is not modified by this prototype.
 
 ## Build Notes
 
-This project targets .NET Framework 4.6.2 and references QuickLook's `QuickLook.Common.dll`.
+This project targets .NET Framework 4.6.2 and references QuickLook's `QuickLook.Common.dll` plus Microsoft WebView2 SDK assemblies.
 
 Before building locally, copy `QuickLook.Common.dll` into:
 
 ```text
 lib/QuickLook.Common.dll
+```
+
+Also place the WebView2 SDK assemblies in:
+
+```text
+lib/webview2/Microsoft.Web.WebView2.Core.dll
+lib/webview2/Microsoft.Web.WebView2.Wpf.dll
+lib/webview2/runtimes/win-x64/native/WebView2Loader.dll
 ```
 
 Then run:
@@ -79,4 +86,4 @@ powershell -ExecutionPolicy Bypass -File scripts/pack-zip.ps1
 
 ## Status
 
-Prototype. Published for tracking the current PowerPoint-native PNG preview experiment and its known behavior.
+Prototype. Published for tracking the current PowerPoint-native PDF/WebView2 preview experiment and its known behavior.

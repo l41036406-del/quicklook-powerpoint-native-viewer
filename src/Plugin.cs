@@ -16,7 +16,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         public void Init()
         {
-            PowerPointPreviewControl.CleanupOldSessions();
+            PowerPointPdfPreviewControl.CleanupOldSessions();
         }
 
         public bool CanHandle(string path)
@@ -32,7 +32,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         public void View(string path, ContextObject context)
         {
-            var viewer = new PowerPointPreviewControl(path);
+            var viewer = new PowerPointPdfPreviewControl(path);
 
             context.ViewerContent = viewer;
             context.Title = Path.GetFileName(path);

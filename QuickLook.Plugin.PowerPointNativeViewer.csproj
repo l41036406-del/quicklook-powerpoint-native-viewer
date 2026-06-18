@@ -12,6 +12,8 @@
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <QuickLookCommonPath Condition=" '$(QuickLookCommonPath)' == '' ">lib\QuickLook.Common.dll</QuickLookCommonPath>
+    <WebView2LibPath Condition=" '$(WebView2LibPath)' == '' ">lib\webview2</WebView2LibPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,13 +42,21 @@
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
     <Reference Include="QuickLook.Common">
-      <HintPath>lib\QuickLook.Common.dll</HintPath>
+      <HintPath>$(QuickLookCommonPath)</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core">
+      <HintPath>$(WebView2LibPath)\Microsoft.Web.WebView2.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Wpf">
+      <HintPath>$(WebView2LibPath)\Microsoft.Web.WebView2.Wpf.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Plugin.cs" />
-    <Compile Include="src\PowerPointPreviewControl.cs" />
+    <Compile Include="src\PowerPointPdfPreviewControl.cs" />
     <Compile Include="src\PowerPointRenderSession.cs" />
     <Compile Include="src\AssemblyInfo.cs" />
   </ItemGroup>

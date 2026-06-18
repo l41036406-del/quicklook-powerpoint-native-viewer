@@ -1,10 +1,14 @@
 bin/
 obj/
 lib/
+deps/
+packages/
 *.user
 *.suo
 *.pdb
 *.zip
+*.qlplugin
+!dist/*.qlplugin
 *.log
 *.tmp
 *.cache

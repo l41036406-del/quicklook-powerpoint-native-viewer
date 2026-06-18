@@ -10,10 +10,10 @@
 
 - 支持 PowerPoint 格式：`.ppt`、`.pptx`、`.pptm`、`.pot`、`.potx`、`.potm`、`.pps`、`.ppsx`、`.ppsm`
 - 使用 Microsoft PowerPoint COM 自动化，以只读方式打开源演示文稿
-- 将当前幻灯片导出为 PNG，并在 QuickLook 中显示
-- 支持上一页/下一页导航
-- 在后台预渲染下一页
-- 预览控件卸载时删除本次会话生成的图片缓存
+- 将演示文稿导出为临时 PDF
+- 通过 WebView2 显示 PDF，使用系统已安装的 Microsoft Edge WebView2 Runtime
+- 通过内嵌 WebView2 PDF 查看器支持 PDF 文字选择和复制
+- 预览控件卸载时删除临时 PDF 和 WebView2 会话数据
 - 不修改原始 PowerPoint 文件
 - 可与原版 OfficeViewer 插件并排安装
 - 使用 `Priority = 100`，让本插件优先接管 PowerPoint 文件，Word/Excel 仍可由其他插件处理
@@ -21,10 +21,9 @@
 ## 当前限制
 
 - 需要 Windows 上已安装并完成 COM 注册的 Microsoft PowerPoint
-- 当前是图片预览，因此暂不支持选择文字和复制文字
-- 启动速度可能慢于 Syncfusion，因为需要启动 PowerPoint
+- 启动速度可能慢于 Syncfusion，因为需要启动 PowerPoint 并生成临时 PDF
 - 当前实现仍是沙箱原型，不是正式稳定版
-- 后续计划尝试 `PowerPoint -> 临时 PDF -> WebView2/PDF.js`，以支持可选择文本
+- 需要 Microsoft Edge WebView2 Runtime；现代 Windows 通常已经自带
 
 ## 启动加载页面
 
@@ -32,7 +31,7 @@
 
 ![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
 
-这个页面是启动阶段的预期现象，表示插件正在启动 PowerPoint 并准备渲染第一页。
+这个页面是启动阶段的预期现象，表示插件正在启动 PowerPoint 并生成临时 PDF 预览。
 
 ## 安装
 
@@ -62,12 +61,20 @@ dist/QuickLook.Plugin.PowerPointNativeViewer.qlplugin
 
 ## 构建说明
 
-项目目标框架为 .NET Framework 4.6.2，并引用 QuickLook 的 `QuickLook.Common.dll`。
+项目目标框架为 .NET Framework 4.6.2，并引用 QuickLook 的 `QuickLook.Common.dll` 和 Microsoft WebView2 SDK 程序集。
 
 本地构建前，请先把 `QuickLook.Common.dll` 复制到：
 
 ```text
 lib/QuickLook.Common.dll
+```
+
+还需要把 WebView2 SDK 程序集放到：
+
+```text
+lib/webview2/Microsoft.Web.WebView2.Core.dll
+lib/webview2/Microsoft.Web.WebView2.Wpf.dll
+lib/webview2/runtimes/win-x64/native/WebView2Loader.dll
 ```
 
 然后运行：
@@ -79,4 +86,4 @@ powershell -ExecutionPolicy Bypass -File scripts/pack-zip.ps1
 
 ## 状态
 
-原型阶段。当前仓库用于记录 PowerPoint 原生 PNG 预览实验，以及测试过程中观察到的已知行为。
+原型阶段。当前仓库用于记录 PowerPoint 原生 PDF/WebView2 预览实验，以及测试过程中观察到的已知行为。
