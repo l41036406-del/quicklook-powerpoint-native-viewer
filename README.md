@@ -1,5 +1,7 @@
 # QuickLook PowerPoint Native Viewer
 
+[中文说明](README.zh-CN.md)
+
 Experimental QuickLook plugin for previewing PowerPoint files through the local Microsoft PowerPoint rendering engine instead of Syncfusion.
 
 This is a prototype created to test a safer preview path for PPT/PPTX files that render poorly or fail in `QuickLook.Plugin.OfficeViewer`.
