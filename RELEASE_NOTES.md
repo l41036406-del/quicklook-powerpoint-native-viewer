@@ -34,3 +34,18 @@ Known limitations:
 - Still requires local Microsoft PowerPoint.
 - First preview can be slower because the whole temporary PDF is generated up front.
 - WebView2 Runtime must be available on the machine.
+
+## v0.3.0-sandbox
+
+Keeps `v0.2.0-sandbox` as the second version and adds usability optimizations.
+
+- Adds a persistent PDF cache keyed by source file path, file size, and modified time.
+- Reuses the cached PDF on subsequent previews of the same unchanged presentation.
+- Keeps WebView2 session data temporary and deletes it when the preview unloads.
+- Cleans persistent cache folders older than 14 days during plugin initialization.
+- Tries to bring the QuickLook preview window to the foreground when the control loads and when the PDF opens.
+
+Known limitations:
+
+- First preview of a changed or uncached file still needs PowerPoint startup and PDF generation.
+- Foreground activation depends on Windows focus rules, so it is a best-effort improvement rather than a hard guarantee.

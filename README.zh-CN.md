@@ -13,7 +13,9 @@
 - 将演示文稿导出为临时 PDF
 - 通过 WebView2 显示 PDF，使用系统已安装的 Microsoft Edge WebView2 Runtime
 - 通过内嵌 WebView2 PDF 查看器支持 PDF 文字选择和复制
-- 预览控件卸载时删除临时 PDF 和 WebView2 会话数据
+- 当源文件路径、大小、修改时间不变时，复用持久 PDF 缓存
+- 预览控件卸载时删除 WebView2 会话数据
+- 预览窗口打开时会尝试主动置前
 - 不修改原始 PowerPoint 文件
 - 可与原版 OfficeViewer 插件并排安装
 - 使用 `Priority = 100`，让本插件优先接管 PowerPoint 文件，Word/Excel 仍可由其他插件处理
@@ -21,7 +23,8 @@
 ## 当前限制
 
 - 需要 Windows 上已安装并完成 COM 注册的 Microsoft PowerPoint
-- 启动速度可能慢于 Syncfusion，因为需要启动 PowerPoint 并生成临时 PDF
+- 首次预览某个文件时可能慢于 Syncfusion，因为需要启动 PowerPoint 并生成 PDF
+- 同一个文件未变化时，再次预览会优先使用持久 PDF 缓存，速度应更快
 - 当前实现仍是沙箱原型，不是正式稳定版
 - 需要 Microsoft Edge WebView2 Runtime；现代 Windows 通常已经自带
 
@@ -31,7 +34,7 @@
 
 ![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
 
-这个页面是启动阶段的预期现象，表示插件正在启动 PowerPoint 并生成临时 PDF 预览。
+这个页面是某个文件首次启动阶段的预期现象，表示插件正在启动 PowerPoint 并生成 PDF 预览。如果已有缓存，这个页面应明显缩短或不明显出现。
 
 ## 安装
 
@@ -58,6 +61,12 @@ dist/QuickLook.Plugin.PowerPointNativeViewer.qlplugin
 ```
 
 这个原型不会修改原版 OfficeViewer 插件。
+
+持久 PDF 缓存位于：
+
+```text
+%LOCALAPPDATA%\QuickLook.PowerPointNativeViewer\pdf-cache
+```
 
 ## 构建说明
 

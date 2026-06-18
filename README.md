@@ -13,7 +13,9 @@ This is a prototype created to test a safer preview path for PPT/PPTX files that
 - Exports the presentation to a temporary PDF
 - Displays the PDF through WebView2, using the installed Microsoft Edge WebView2 Runtime
 - Supports PDF text selection/copy through the embedded WebView2 PDF viewer
-- Deletes the temporary PDF and WebView2 session data when the preview control unloads
+- Reuses a persistent PDF cache when the source file path, size, and modified time are unchanged
+- Deletes WebView2 session data when the preview control unloads
+- Tries to bring the QuickLook preview window to the front when it opens
 - Leaves the original PowerPoint file unchanged
 - Installs side-by-side with the original OfficeViewer plugin
 - Uses `Priority = 100` so it can take over PowerPoint files while Word/Excel remain handled by other plugins
@@ -21,7 +23,8 @@ This is a prototype created to test a safer preview path for PPT/PPTX files that
 ## Current Limitations
 
 - Requires Microsoft PowerPoint to be installed and COM-registered on Windows
-- Startup can be slower than Syncfusion because PowerPoint must be launched and a temporary PDF must be generated
+- First startup for a file can be slower than Syncfusion because PowerPoint must be launched and a PDF must be generated
+- Subsequent previews of the same unchanged file should open faster from the persistent PDF cache
 - The current implementation is a sandbox prototype, not a polished release
 - Requires Microsoft Edge WebView2 Runtime, which is usually already installed on modern Windows systems
 
@@ -31,7 +34,7 @@ When the plugin launches PowerPoint, QuickLook may show this black loading page:
 
 ![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
 
-This screen is expected during startup. It indicates that the plugin is starting PowerPoint and generating the temporary PDF preview.
+This screen is expected during the first startup for a file. It indicates that the plugin is starting PowerPoint and generating the PDF preview. If the cached PDF is available, this screen should appear for a much shorter time or not be noticeable.
 
 ## Install
 
@@ -58,6 +61,12 @@ Remove this folder and restart QuickLook:
 ```
 
 The original OfficeViewer plugin is not modified by this prototype.
+
+The persistent PDF cache is stored under:
+
+```text
+%LOCALAPPDATA%\QuickLook.PowerPointNativeViewer\pdf-cache
+```
 
 ## Build Notes
 
