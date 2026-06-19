@@ -2,18 +2,18 @@
 
 [中文说明](README.zh-CN.md)
 
-Experimental QuickLook plugin for previewing PowerPoint files through the Windows Shell Preview Handler or the local Microsoft PowerPoint rendering engine instead of Syncfusion.
+Experimental QuickLook plugin for previewing PowerPoint files through the local Microsoft PowerPoint rendering engine instead of Syncfusion.
 
 This is a prototype created to test a safer preview path for PPT/PPTX files that render poorly or fail in `QuickLook.Plugin.OfficeViewer`.
 
 ## Current Features
 
 - Handles PowerPoint formats: `.ppt`, `.pptx`, `.pptm`, `.pot`, `.potx`, `.potm`, `.pps`, `.ppsx`, `.ppsm`
-- Tries the registered Windows Shell Preview Handler first, following the same general idea used by PowerToys Peek
-- Falls back to Microsoft PowerPoint COM automation when the system preview handler is unavailable or fails
-- Exports the presentation to a temporary PDF in the fallback path
-- Displays fallback PDFs through WebView2, using the installed Microsoft Edge WebView2 Runtime
-- Supports text selection/copy when the active backend exposes selectable text, such as the Shell Preview Handler or WebView2 PDF viewer
+- Uses Microsoft PowerPoint COM automation to open the source presentation read-only
+- Renders slides to PNG images and displays them in a pure WPF viewer
+- Avoids the WPS/Shell native preview child window so QuickLook Up/Down file navigation can keep working
+- Provides previous/next slide buttons inside the PowerPoint preview
+- Keeps experimental Shell Preview Handler and PDF/WebView2 code in the repository for future selectable-text modes
 - Reuses a persistent PDF cache when the source file path, size, and modified time are unchanged
 - Deletes WebView2 session data when the preview control unloads
 - Tries to bring the QuickLook preview window to the front when it opens
@@ -23,20 +23,19 @@ This is a prototype created to test a safer preview path for PPT/PPTX files that
 
 ## Current Limitations
 
-- Shell Preview Handler behavior depends on the preview handler registered on the local Windows system
-- Requires Microsoft PowerPoint to be installed and COM-registered on Windows for the PDF fallback path
-- First fallback startup for a file can be slower than Syncfusion because PowerPoint must be launched and a PDF must be generated
-- Subsequent fallback previews of the same unchanged file should open faster from the persistent PDF cache
+- Requires Microsoft PowerPoint to be installed and COM-registered on Windows
+- Default preview is image-based, so text selection/copy is not available yet
+- First startup for a file can still take time because PowerPoint must be launched
 - The current implementation is a sandbox prototype, not a polished release
 - Requires Microsoft Edge WebView2 Runtime, which is usually already installed on modern Windows systems
 
 ## Startup Loading Screen
 
-When the plugin can use the Shell Preview Handler, this PowerPoint startup page should be avoided. If the plugin falls back to launching PowerPoint, QuickLook may show this black loading page:
+When the plugin launches PowerPoint, QuickLook may show this loading page:
 
 ![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
 
-This screen is expected only during the PDF fallback path for the first startup of a file. It indicates that the plugin is starting PowerPoint and generating the PDF preview. If the Shell Preview Handler works or a cached PDF is available, this screen should appear for a much shorter time or not be noticeable.
+This screen is expected during the first startup of a file. It indicates that the plugin is starting PowerPoint and rendering the first slide preview.
 
 ## Install
 
@@ -97,4 +96,4 @@ powershell -ExecutionPolicy Bypass -File scripts/pack-zip.ps1
 
 ## Status
 
-Prototype. Published for tracking the current Shell Preview Handler plus PowerPoint PDF/WebView2 fallback experiment and its known behavior.
+Prototype. Published for tracking the current PowerPoint image preview experiment and its known behavior.

@@ -66,3 +66,16 @@ Known limitations:
 - Shell Preview Handler quality, speed, and text selection behavior depend on the local Office/WPS/Windows preview handler registration.
 - If the system handler hangs inside COM initialization, fallback cannot always interrupt it immediately.
 - PDF fallback still requires local PowerPoint.
+
+## v0.5.0-sandbox
+
+Switches the default preview path back to a PowerPoint-rendered image surface.
+
+- Uses a pure WPF image viewer by default, avoiding the WPS/Shell native child window that blocked QuickLook Up/Down file navigation.
+- Renders the first slide quickly through PowerPoint COM and pre-renders the next slide.
+- Keeps the PDF/WebView2 and Shell Preview Handler code in the repository for future selectable-text modes, but does not use them as the default viewer.
+
+Known limitations:
+
+- Default mode is image-based, so slide text is not selectable.
+- Requires local PowerPoint.
