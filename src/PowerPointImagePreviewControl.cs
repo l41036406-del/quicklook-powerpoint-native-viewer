@@ -112,20 +112,37 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
             _disposed = true;
 
-            if (_session != null)
-            {
-                _session.Dispose();
-                _session = null;
-            }
+            // Tear down PowerPoint and the temp folder OFF the UI thread. This
+            // runs from Unloaded while QuickLook is swapping the preview window's
+            // content during file navigation; PowerPoint's Quit can take a second
+            // or more, and blocking the UI thread here freezes the swap so the new
+            // file's title/content paints on top of the old one (ghosted text).
+            var session = _session;
+            _session = null;
+            var sessionDir = _sessionDir;
 
-            try
+            Task.Run(delegate
             {
-                if (Directory.Exists(_sessionDir))
-                    Directory.Delete(_sessionDir, true);
-            }
-            catch
-            {
-            }
+                if (session != null)
+                {
+                    try
+                    {
+                        session.Dispose();
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                try
+                {
+                    if (Directory.Exists(sessionDir))
+                        Directory.Delete(sessionDir, true);
+                }
+                catch
+                {
+                }
+            });
         }
 
         private static Button CreateButton(string text)

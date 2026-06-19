@@ -109,3 +109,16 @@ Known limitations:
 - Slides are rendered as images, so slide text is not selectable.
 - Requires local PowerPoint.
 - The first preview of a large file still incurs PowerPoint startup latency.
+
+## v0.5.3-sandbox
+
+Fixes ghosted/overlapping title text when switching files.
+
+- Tear down the PowerPoint render session and temp folder on a background thread instead of the UI thread. Previously `Dispose()` (called from `Unloaded` while QuickLook swaps the preview window's content during Up/Down navigation) blocked the UI thread waiting for PowerPoint to quit, so the incoming file's title/content painted on top of the outgoing one — appearing as garbled/overlapping title text.
+- Switching is now snappier because closing the previous preview no longer freezes the UI.
+
+Known limitations:
+
+- Slides are rendered as images, so slide text is not selectable.
+- Requires local PowerPoint.
+- The first preview of a large file still incurs PowerPoint startup latency.
