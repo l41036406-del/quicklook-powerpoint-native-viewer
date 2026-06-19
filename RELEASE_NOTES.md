@@ -122,3 +122,16 @@ Known limitations:
 - Slides are rendered as images, so slide text is not selectable.
 - Requires local PowerPoint.
 - The first preview of a large file still incurs PowerPoint startup latency.
+
+## v0.5.4-sandbox
+
+Further reduces title-bar ghosting while switching between previewed files.
+
+- Matches QuickLook.Plugin.OfficeViewer's preferred preview size (`1920x1440`, scale `0.9`) so switching between PowerPoint and other Office previews does not resize the shared QuickLook window.
+- Avoiding that resize reduces Mica/Acrylic title-bar composition lag that can leave the previous file name visually overlapping the next one during Up/Down navigation.
+
+Known limitations:
+
+- Slides are rendered as images, so slide text is not selectable.
+- Requires local PowerPoint.
+- The first preview of a large file still incurs PowerPoint startup latency.

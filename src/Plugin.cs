@@ -26,7 +26,12 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         public void Prepare(string path, ContextObject context)
         {
-            context.SetPreferredSizeFit(new Size { Width = 1280, Height = 800 }, 0.9d);
+            // Match QuickLook.Plugin.OfficeViewer's preferred size (1920x1440, 0.9)
+            // so that navigating between PowerPoint files and Word/Excel/other Office
+            // documents does NOT resize the shared preview window. The window resize
+            // is what makes QuickLook's Mica/Acrylic title bar composite lag and ghost
+            // the previous file name over the new one while switching.
+            context.SetPreferredSizeFit(new Size { Width = 1920, Height = 1440 }, 0.9d);
             context.CanResize = true;
         }
 
