@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Input;
 using Microsoft.Win32;
 
 namespace QuickLook.Plugin.PowerPointNativeViewer
@@ -120,6 +121,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                 _previewHandler.SetWindow(_hostHwnd, ref rect);
                 _previewHandler.DoPreview();
                 UpdatePreviewRect(rect.Right, rect.Bottom);
+                FocusPreviewHandler();
 
                 var loaded = PreviewLoaded;
                 if (loaded != null)
@@ -132,6 +134,71 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                 var failed = PreviewFailed;
                 if (failed != null)
                     failed(this, new ShellPreviewFailedEventArgs(ex));
+            }
+        }
+
+        protected override bool TabIntoCore(TraversalRequest request)
+        {
+            FocusPreviewHandler();
+            return true;
+        }
+
+        protected override void OnGotKeyboardFocus(KeyboardFocusChangedEventArgs e)
+        {
+            base.OnGotKeyboardFocus(e);
+            FocusPreviewHandler();
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseDown(e);
+            Focus();
+            FocusPreviewHandler();
+        }
+
+        protected override bool TranslateAcceleratorCore(ref MSG msg, ModifierKeys modifiers)
+        {
+            if (_previewHandler == null)
+                return base.TranslateAcceleratorCore(ref msg, modifiers);
+
+            var nativeMsg = new NativeMsg
+            {
+                Hwnd = msg.hwnd,
+                Message = msg.message,
+                WParam = msg.wParam,
+                LParam = msg.lParam,
+                Time = msg.time,
+                PtX = msg.pt_x,
+                PtY = msg.pt_y
+            };
+
+            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NativeMsg)));
+            try
+            {
+                Marshal.StructureToPtr(nativeMsg, ptr, false);
+                return _previewHandler.TranslateAccelerator(ptr) == 0;
+            }
+            catch
+            {
+                return base.TranslateAcceleratorCore(ref msg, modifiers);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+            }
+        }
+
+        private void FocusPreviewHandler()
+        {
+            if (_previewHandler == null)
+                return;
+
+            try
+            {
+                _previewHandler.SetFocus();
+            }
+            catch
+            {
             }
         }
 
@@ -359,6 +426,18 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             public int Top;
             public int Right;
             public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeMsg
+        {
+            public IntPtr Hwnd;
+            public int Message;
+            public IntPtr WParam;
+            public IntPtr LParam;
+            public int Time;
+            public int PtX;
+            public int PtY;
         }
 
         [ComImport]
