@@ -23,16 +23,21 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
         private const int WmSysKeyDown = 0x0104;
         private const int VkUp = 0x26;
         private const int VkDown = 0x28;
+        private const int VkControl = 0x11;
+        private const int VkMenu = 0x12;
+        private const int VkShift = 0x10;
 
         private static readonly WindowProc HostWindowProc = DefWndProc;
         private static bool _windowClassRegistered;
 
         private readonly string _path;
         private IntPtr _hostHwnd;
+        private IntPtr _quickLookHwnd;
         private IPreviewHandler _previewHandler;
         private object _previewHandlerObject;
         private IStream _fileStream;
         private bool _started;
+        private bool _messageFilterInstalled;
         private bool _disposed;
 
         public ShellPreviewHandlerHost(string path)
@@ -101,6 +106,42 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             UpdatePreviewRect((int)Math.Max(1, rcBoundingBox.Width), (int)Math.Max(1, rcBoundingBox.Height));
         }
 
+        private void InstallNavigationKeyFilter()
+        {
+            if (_messageFilterInstalled)
+                return;
+
+            var source = PresentationSource.FromVisual(this) as HwndSource;
+            if (source == null || source.Handle == IntPtr.Zero)
+                return;
+
+            _quickLookHwnd = source.Handle;
+            ComponentDispatcher.ThreadFilterMessage += OnThreadFilterMessage;
+            _messageFilterInstalled = true;
+        }
+
+        private void RemoveNavigationKeyFilter()
+        {
+            if (!_messageFilterInstalled)
+                return;
+
+            ComponentDispatcher.ThreadFilterMessage -= OnThreadFilterMessage;
+            _messageFilterInstalled = false;
+            _quickLookHwnd = IntPtr.Zero;
+        }
+
+        private void OnThreadFilterMessage(ref MSG msg, ref bool handled)
+        {
+            if (handled || !IsPlainUpOrDownMessage(msg) || !IsShellPreviewMessageTarget(msg.hwnd))
+                return;
+
+            if (_quickLookHwnd == IntPtr.Zero)
+                return;
+
+            PostMessage(_quickLookHwnd, msg.message, msg.wParam, msg.lParam);
+            handled = true;
+        }
+
         private void StartPreview()
         {
             if (_started || _disposed)
@@ -125,6 +166,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                 _previewHandler.SetWindow(_hostHwnd, ref rect);
                 _previewHandler.DoPreview();
                 UpdatePreviewRect(rect.Right, rect.Bottom);
+                InstallNavigationKeyFilter();
                 FocusPreviewHandler();
 
                 var loaded = PreviewLoaded;
@@ -207,6 +249,31 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             return key == VkUp || key == VkDown;
         }
 
+        private static bool IsPlainUpOrDownMessage(MSG msg)
+        {
+            if (msg.message != WmKeyDown && msg.message != WmSysKeyDown)
+                return false;
+
+            var key = msg.wParam.ToInt32();
+            if (key != VkUp && key != VkDown)
+                return false;
+
+            return !IsKeyDown(VkControl) && !IsKeyDown(VkMenu) && !IsKeyDown(VkShift);
+        }
+
+        private bool IsShellPreviewMessageTarget(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero || _hostHwnd == IntPtr.Zero)
+                return false;
+
+            return hwnd == _hostHwnd || IsChild(_hostHwnd, hwnd);
+        }
+
+        private static bool IsKeyDown(int virtualKey)
+        {
+            return (GetKeyState(virtualKey) & 0x8000) != 0;
+        }
+
         private void FocusPreviewHandler()
         {
             if (_previewHandler == null)
@@ -272,6 +339,8 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         private void ClearPreview()
         {
+            RemoveNavigationKeyFilter();
+
             if (_previewHandler != null)
             {
                 try
@@ -415,6 +484,15 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsChild(IntPtr parent, IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        private static extern short GetKeyState(int virtualKey);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
         private static extern IntPtr DefWindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
