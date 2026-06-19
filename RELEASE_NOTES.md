@@ -79,3 +79,17 @@ Known limitations:
 
 - Default mode is image-based, so slide text is not selectable.
 - Requires local PowerPoint.
+
+## v0.5.1-sandbox
+
+Verifies and documents the image-preview navigation behavior; no functional code changes.
+
+- Verified end-to-end that QuickLook Up/Down file navigation works while previewing PowerPoint in the default image mode: pressing Up/Down switches the previewed file (slide image included), and the foreground window stays on Explorer throughout.
+- Confirmed the root cause of the earlier navigation failures: the previous Shell Preview Handler / WebView2 child windows stole foreground focus from Explorer, so QuickLook could no longer read the moved selection. The pure WPF image surface does not steal focus, which restores navigation.
+- Updated the plugin manifest description to match the current image-rendering default.
+
+Known limitations:
+
+- Default mode is image-based, so slide text is not selectable.
+- Requires local PowerPoint.
+- Switching to a not-yet-cached large presentation still incurs PowerPoint startup latency.
