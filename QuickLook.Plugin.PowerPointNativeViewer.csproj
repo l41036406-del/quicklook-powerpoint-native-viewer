@@ -58,6 +58,7 @@
     <Compile Include="src\Plugin.cs" />
     <Compile Include="src\PowerPointPdfPreviewControl.cs" />
     <Compile Include="src\PowerPointRenderSession.cs" />
+    <Compile Include="src\ShellPreviewHandlerHost.cs" />
     <Compile Include="src\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

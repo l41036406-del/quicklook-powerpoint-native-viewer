@@ -24,8 +24,11 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
         private readonly string _path;
         private readonly string _sessionDir;
         private readonly string _cachedPdfPath;
+        private readonly Grid _root;
         private readonly TextBlock _status;
         private readonly WebView2 _webView;
+        private ShellPreviewHandlerHost _shellHost;
+        private bool _pdfFallbackStarted;
         private bool _disposed;
 
         public PowerPointPdfPreviewControl(string path)
@@ -36,7 +39,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             Directory.CreateDirectory(_sessionDir);
             Directory.CreateDirectory(Path.GetDirectoryName(_cachedPdfPath));
 
-            var root = new Grid { Background = Brushes.Black };
+            _root = new Grid { Background = Brushes.Black };
 
             _webView = new WebView2
             {
@@ -53,10 +56,10 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            root.Children.Add(_webView);
-            root.Children.Add(_status);
+            _root.Children.Add(_webView);
+            _root.Children.Add(_status);
 
-            Content = root;
+            Content = _root;
             Loaded += delegate
             {
                 BringHostWindowToFront();
@@ -125,6 +128,8 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             {
             }
 
+            DisposeShellHost();
+
             try
             {
                 if (Directory.Exists(_sessionDir))
@@ -135,15 +140,70 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             }
         }
 
-        private async void Start()
+        private void Start()
         {
             if (_disposed)
                 return;
 
+            if (TryStartShellPreview())
+                return;
+
+            StartPdfFallback();
+        }
+
+        private bool TryStartShellPreview()
+        {
+            if (!ShellPreviewHandlerHost.CanPreview(_path))
+                return false;
+
             try
             {
-                SetStatus("Starting PowerPoint...");
+                SetStatus("Opening system preview...");
 
+                _shellHost = new ShellPreviewHandlerHost(_path)
+                {
+                    Visibility = Visibility.Collapsed
+                };
+
+                _shellHost.PreviewLoaded += delegate
+                {
+                    if (_disposed)
+                        return;
+
+                    _webView.Visibility = Visibility.Collapsed;
+                    _shellHost.Visibility = Visibility.Visible;
+                    _status.Visibility = Visibility.Collapsed;
+                    BringHostWindowToFront();
+                };
+
+                _shellHost.PreviewFailed += delegate
+                {
+                    if (_disposed)
+                        return;
+
+                    DisposeShellHost();
+                    StartPdfFallback();
+                };
+
+                _root.Children.Insert(0, _shellHost);
+                return true;
+            }
+            catch
+            {
+                DisposeShellHost();
+                return false;
+            }
+        }
+
+        private async void StartPdfFallback()
+        {
+            if (_disposed || _pdfFallbackStarted)
+                return;
+
+            _pdfFallbackStarted = true;
+
+            try
+            {
                 if (File.Exists(_cachedPdfPath))
                 {
                     await ShowPdfAsync(_cachedPdfPath, "Opening cached PDF preview...");
@@ -169,8 +229,32 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             catch (Exception ex)
             {
                 if (!_disposed)
-                    SetStatus("PowerPoint PDF preview failed: " + ex.Message);
+                    SetStatus("PowerPoint preview failed: " + ex.Message);
             }
+        }
+
+        private void DisposeShellHost()
+        {
+            if (_shellHost == null)
+                return;
+
+            try
+            {
+                _root.Children.Remove(_shellHost);
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                _shellHost.Dispose();
+            }
+            catch
+            {
+            }
+
+            _shellHost = null;
         }
 
         private async Task ShowPdfAsync(string pdfPath, string status)

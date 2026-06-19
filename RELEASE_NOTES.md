@@ -49,3 +49,19 @@ Known limitations:
 
 - First preview of a changed or uncached file still needs PowerPoint startup and PDF generation.
 - Foreground activation depends on Windows focus rules, so it is a best-effort improvement rather than a hard guarantee.
+
+## v0.4.0-sandbox
+
+Adds a PowerToys Peek-inspired Shell Preview Handler path before the PDF fallback.
+
+- Checks the Windows registry for the file type's registered Shell Preview Handler.
+- Hosts the Shell Preview Handler inside a WPF `HwndHost` child window.
+- Initializes handlers through `IInitializeWithFile`, `IInitializeWithStream`, or `IInitializeWithItem`.
+- Uses the system preview path first, then falls back to the existing cached PDF/WebView2 pipeline if the handler is unavailable or fails.
+- Keeps the persistent PDF cache and WebView2 cleanup behavior from `v0.3.0-sandbox`.
+
+Known limitations:
+
+- Shell Preview Handler quality, speed, and text selection behavior depend on the local Office/WPS/Windows preview handler registration.
+- If the system handler hangs inside COM initialization, fallback cannot always interrupt it immediately.
+- PDF fallback still requires local PowerPoint.
