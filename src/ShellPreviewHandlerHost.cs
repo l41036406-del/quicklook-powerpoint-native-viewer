@@ -43,6 +43,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
         public ShellPreviewHandlerHost(string path)
         {
             _path = path;
+            Focusable = false;
             Loaded += delegate { StartPreview(); };
         }
 
@@ -167,7 +168,7 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
                 _previewHandler.DoPreview();
                 UpdatePreviewRect(rect.Right, rect.Bottom);
                 InstallNavigationKeyFilter();
-                FocusPreviewHandler();
+                MakePreviewPassive();
 
                 var loaded = PreviewLoaded;
                 if (loaded != null)
@@ -185,21 +186,19 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         protected override bool TabIntoCore(TraversalRequest request)
         {
-            FocusPreviewHandler();
-            return true;
+            return false;
         }
 
         protected override void OnGotKeyboardFocus(KeyboardFocusChangedEventArgs e)
         {
             base.OnGotKeyboardFocus(e);
-            FocusPreviewHandler();
+            ReturnFocusToQuickLookWindow();
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
             base.OnMouseDown(e);
-            Focus();
-            FocusPreviewHandler();
+            ReturnFocusToQuickLookWindow();
         }
 
         protected override bool TranslateAcceleratorCore(ref MSG msg, ModifierKeys modifiers)
@@ -282,6 +281,38 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             try
             {
                 _previewHandler.SetFocus();
+            }
+            catch
+            {
+            }
+        }
+
+        private void MakePreviewPassive()
+        {
+            if (_hostHwnd != IntPtr.Zero)
+            {
+                try
+                {
+                    EnableWindow(_hostHwnd, false);
+                }
+                catch
+                {
+                }
+            }
+
+            ReturnFocusToQuickLookWindow();
+        }
+
+        private void ReturnFocusToQuickLookWindow()
+        {
+            try
+            {
+                var window = Window.GetWindow(this);
+                if (window != null)
+                {
+                    window.Focus();
+                    Keyboard.Focus(window);
+                }
             }
             catch
             {
@@ -484,6 +515,9 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool EnableWindow(IntPtr hwnd, bool enable);
 
         [DllImport("user32.dll")]
         private static extern bool IsChild(IntPtr parent, IntPtr hwnd);
