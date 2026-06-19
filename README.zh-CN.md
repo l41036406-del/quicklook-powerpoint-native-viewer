@@ -2,40 +2,40 @@
 
 [English](README.md)
 
-这是一个实验性的 QuickLook 插件，用于通过本机 Microsoft PowerPoint 渲染引擎预览 PowerPoint 文件，而不是使用 Syncfusion。
+一个 QuickLook 插件，通过本机安装的 Microsoft PowerPoint 引擎，把幻灯片渲染成图片来预览 PowerPoint 文件。
 
-这个原型的目标是验证一种更稳的 PPT/PPTX 预览路径，尤其适用于 `QuickLook.Plugin.OfficeViewer` 预览效果失真或直接报错的文件。
+它是 `QuickLook.Plugin.OfficeViewer`（Syncfusion）的高保真替代方案，适用于在原插件里预览失真或直接报错的 PPT/PPTX 文件——同时**保持 QuickLook 正常的上/下键文件切换可用**。
 
-## 当前功能
+## 当前版本能力
 
 - 支持 PowerPoint 格式：`.ppt`、`.pptx`、`.pptm`、`.pot`、`.potx`、`.potm`、`.pps`、`.ppsx`、`.ppsm`
-- 使用 Microsoft PowerPoint COM 自动化，以只读方式打开源演示文稿
-- 将幻灯片渲染为 PNG 图片，并在纯 WPF 查看器中显示
-- 避开 WPS/Shell 原生预览子窗口，让 QuickLook 的上/下键文件切换尽量保持可用
-- 在 PowerPoint 预览内提供上一页/下一页幻灯片按钮
-- 仓库中仍保留实验性的 Shell Preview Handler 和 PDF/WebView2 代码，供后续可复制文字模式使用
-- 当源文件路径、大小、修改时间不变时，复用持久 PDF 缓存
-- 预览控件卸载时删除 WebView2 会话数据
-- 预览窗口打开时会尝试主动置前
-- 不修改原始 PowerPoint 文件
+- 通过 Microsoft PowerPoint COM 自动化（以只读方式打开）把幻灯片渲染成图片，并在纯 WPF 查看器中显示，视觉效果与 PowerPoint 本体一致
+- **上/下键切换文件可用**——预览过程中按上/下键，会像其他 QuickLook 预览一样切换到资源管理器里的上一个/下一个文件（已端到端实测验证）。图片界面不会抢占前台焦点，资源管理器始终掌控选中项
+- 预览内提供上一页/下一页**幻灯片**按钮，并预渲染下一张以加快翻页
+- 不修改原始 PowerPoint 文件（只读打开）
 - 可与原版 OfficeViewer 插件并排安装
-- 使用 `Priority = 100`，让本插件优先接管 PowerPoint 文件，Word/Excel 仍可由其他插件处理
+- 使用 `Priority = 100`，优先接管 PowerPoint 文件，Word/Excel 仍由其他插件处理
+- 预览关闭时清理临时渲染目录
 
-## 当前限制
+## 限制
 
+- 默认图片模式把幻灯片渲染为图片，因此**无法选择或复制幻灯片中的文字**
 - 需要 Windows 上已安装并完成 COM 注册的 Microsoft PowerPoint
-- 默认预览是图片模式，因此暂不支持文字选择和复制
-- 某个文件首次预览时仍需要启动 PowerPoint，可能需要一点时间
-- 当前实现仍是沙箱原型，不是正式稳定版
-- 需要 Microsoft Edge WebView2 Runtime；现代 Windows 通常已经自带
+- 某个未缓存或较大文件首次预览时，仍需几秒钟启动 PowerPoint 并渲染
+- 沙箱构建，供个人使用，尚非正式稳定版
 
-## 启动加载页面
+## 可选 / 保留代码（非默认）
 
-插件启动 PowerPoint 时，QuickLook 可能会显示下面这个黑色加载页：
+仓库还保留了两条更早的预览路径，供将来实现**可复制文字**模式使用，但**默认图片查看器并不使用它们**：
 
-![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
+- Shell Preview Handler 宿主（类似 PowerToys Peek 的系统预览）
+- 把 PowerPoint 导出为 PDF 后用 WebView2 显示，并带一个按文件路径/大小/修改时间为键的持久 PDF 缓存
 
-这个页面是某个文件首次启动阶段的预期现象，表示插件正在启动 PowerPoint 并渲染首张幻灯片预览。
+启用这些会重新引入原生 / WebView2 子窗口——而这正是之前破坏上/下键切换的原因，所以默认特意让它们处于休眠状态。其中 PDF 路径还需要 Microsoft Edge WebView2 Runtime。
+
+## 加载页面
+
+打开文件时，QuickLook 会在 PowerPoint 启动、首张幻灯片渲染期间短暂显示一个 “Starting PowerPoint…” 页面。这是文件首次打开时的预期现象，之后翻页会更快。
 
 ## 安装
 
@@ -61,9 +61,9 @@ dist/QuickLook.Plugin.PowerPointNativeViewer.qlplugin
 %LOCALAPPDATA%\Packages\21090PaddyXu.QuickLook_egxr34yet59cg\LocalCache\Roaming\pooi.moe\QuickLook\QuickLook.Plugin\QuickLook.Plugin.PowerPointNativeViewer
 ```
 
-这个原型不会修改原版 OfficeViewer 插件。
+本插件不会修改原版 OfficeViewer 插件。
 
-持久 PDF 缓存位于：
+持久 PDF 缓存（仅在使用非默认的 PDF 模式时才会生成）位于：
 
 ```text
 %LOCALAPPDATA%\QuickLook.PowerPointNativeViewer\pdf-cache
@@ -96,4 +96,4 @@ powershell -ExecutionPolicy Bypass -File scripts/pack-zip.ps1
 
 ## 状态
 
-原型阶段。当前仓库用于记录 PowerPoint 图片预览实验，以及测试过程中观察到的已知行为。
+可用的沙箱构建。默认的图片预览路径已验证：PowerPoint 幻灯片能正确渲染，且预览时 QuickLook 上/下键文件切换可用。可复制文字的 Shell/PDF 路径仍属实验性，默认禁用。

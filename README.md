@@ -2,40 +2,40 @@
 
 [中文说明](README.zh-CN.md)
 
-Experimental QuickLook plugin for previewing PowerPoint files through the local Microsoft PowerPoint rendering engine instead of Syncfusion.
+A QuickLook plugin that previews PowerPoint files by rendering their slides to images through the locally installed Microsoft PowerPoint engine.
 
-This is a prototype created to test a safer preview path for PPT/PPTX files that render poorly or fail in `QuickLook.Plugin.OfficeViewer`.
+It is a higher-fidelity alternative to `QuickLook.Plugin.OfficeViewer` (Syncfusion) for PPT/PPTX files that render poorly or fail there — while keeping QuickLook's normal Up/Down file navigation working.
 
-## Current Features
+## Capabilities (current version)
 
 - Handles PowerPoint formats: `.ppt`, `.pptx`, `.pptm`, `.pot`, `.potx`, `.potm`, `.pps`, `.ppsx`, `.ppsm`
-- Uses Microsoft PowerPoint COM automation to open the source presentation read-only
-- Renders slides to PNG images and displays them in a pure WPF viewer
-- Avoids the WPS/Shell native preview child window so QuickLook Up/Down file navigation can keep working
-- Provides previous/next slide buttons inside the PowerPoint preview
-- Keeps experimental Shell Preview Handler and PDF/WebView2 code in the repository for future selectable-text modes
-- Reuses a persistent PDF cache when the source file path, size, and modified time are unchanged
-- Deletes WebView2 session data when the preview control unloads
-- Tries to bring the QuickLook preview window to the front when it opens
-- Leaves the original PowerPoint file unchanged
+- Renders slides to images via Microsoft PowerPoint COM automation (opened read-only) and shows them in a pure WPF viewer, so visual fidelity matches PowerPoint itself
+- **Up/Down file navigation works** — while previewing, pressing Up/Down switches to the previous/next file in Explorer just like any other QuickLook preview (verified end-to-end). The image surface does not steal foreground focus, so Explorer stays in control of the selection
+- Previous/next **slide** buttons inside the preview, and pre-renders the next slide for faster paging
+- Leaves the original PowerPoint file untouched (read-only)
 - Installs side-by-side with the original OfficeViewer plugin
-- Uses `Priority = 100` so it can take over PowerPoint files while Word/Excel remain handled by other plugins
+- Uses `Priority = 100` so it takes over PowerPoint files, while Word/Excel stay with other plugins
+- Cleans up its temporary render folder when the preview closes
 
-## Current Limitations
+## Limitations
 
+- The default image mode renders slides as pictures, so **slide text cannot be selected or copied**
 - Requires Microsoft PowerPoint to be installed and COM-registered on Windows
-- Default preview is image-based, so text selection/copy is not available yet
-- First startup for a file can still take time because PowerPoint must be launched
-- The current implementation is a sandbox prototype, not a polished release
-- Requires Microsoft Edge WebView2 Runtime, which is usually already installed on modern Windows systems
+- The first preview of an uncached or large file still needs a few seconds while PowerPoint starts and renders
+- Sandbox build intended for personal use, not yet a polished release
 
-## Startup Loading Screen
+## Optional / retained code (not the default)
 
-When the plugin launches PowerPoint, QuickLook may show this loading page:
+The repository also keeps two earlier preview paths for a possible future *selectable-text* mode. They are **not** used by the default image viewer:
 
-![Starting PowerPoint loading screen](docs/images/starting-powerpoint-stuck.png)
+- A Shell Preview Handler host (PowerToys Peek-style system preview)
+- A PowerPoint-to-PDF path shown in WebView2, with a persistent PDF cache keyed by file path/size/modified-time
 
-This screen is expected during the first startup of a file. It indicates that the plugin is starting PowerPoint and rendering the first slide preview.
+Enabling these would re-introduce native/WebView2 child windows, which is exactly what previously broke Up/Down navigation, so they are kept dormant by design. The PDF path additionally needs the Microsoft Edge WebView2 Runtime.
+
+## Loading screen
+
+When opening a file, QuickLook briefly shows a "Starting PowerPoint…" page while PowerPoint launches and the first slide renders. This is expected on the first open of a file; subsequent paging is faster.
 
 ## Install
 
@@ -61,9 +61,9 @@ Remove this folder and restart QuickLook:
 %LOCALAPPDATA%\Packages\21090PaddyXu.QuickLook_egxr34yet59cg\LocalCache\Roaming\pooi.moe\QuickLook\QuickLook.Plugin\QuickLook.Plugin.PowerPointNativeViewer
 ```
 
-The original OfficeViewer plugin is not modified by this prototype.
+The original OfficeViewer plugin is not modified by this plugin.
 
-The persistent PDF cache is stored under:
+The persistent PDF cache (only created if the non-default PDF mode is used) is stored under:
 
 ```text
 %LOCALAPPDATA%\QuickLook.PowerPointNativeViewer\pdf-cache
@@ -96,4 +96,4 @@ powershell -ExecutionPolicy Bypass -File scripts/pack-zip.ps1
 
 ## Status
 
-Prototype. Published for tracking the current PowerPoint image preview experiment and its known behavior.
+Working sandbox build. The default image-preview path is verified: PowerPoint slides render correctly and QuickLook Up/Down file navigation works while previewing. The selectable-text (Shell/PDF) paths remain experimental and disabled by default.
