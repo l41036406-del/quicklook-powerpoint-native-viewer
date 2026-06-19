@@ -93,3 +93,19 @@ Known limitations:
 - Default mode is image-based, so slide text is not selectable.
 - Requires local PowerPoint.
 - Switching to a not-yet-cached large presentation still incurs PowerPoint startup latency.
+
+## v0.5.2-sandbox
+
+Removes the unused alternate preview paths and their caches, leaving a single image-only viewer.
+
+- Removed the PowerPoint-to-PDF / WebView2 preview mode (`PowerPointPdfPreviewControl`).
+- Removed the Shell Preview Handler host (`ShellPreviewHandlerHost`) that only fed the PDF path.
+- Dropped the now-unused `ExportPdf` helper, the WebView2 SDK references, and the WebView2 files from the `.qlplugin` package.
+- Deleted the experimental persistent PDF cache and the temporary WebView2 session data.
+- Result: the plugin DLL and package are much smaller, and there is exactly one preview path (image rendering) with working Up/Down navigation.
+
+Known limitations:
+
+- Slides are rendered as images, so slide text is not selectable.
+- Requires local PowerPoint.
+- The first preview of a large file still incurs PowerPoint startup latency.

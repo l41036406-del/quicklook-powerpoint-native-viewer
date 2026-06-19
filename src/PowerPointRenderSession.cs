@@ -66,21 +66,6 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             });
         }
 
-        public string ExportPdf()
-        {
-            var outputPath = Path.Combine(_sessionDir, "preview.pdf");
-
-            if (File.Exists(outputPath))
-                return outputPath;
-
-            return Invoke(delegate
-            {
-                const int ppSaveAsPDF = 32;
-                _presentation.SaveAs(outputPath, ppSaveAsPDF, MsoFalse);
-                return outputPath;
-            });
-        }
-
         public void Dispose()
         {
             if (_disposed)

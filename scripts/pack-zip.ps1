@@ -10,10 +10,7 @@ Remove-Item $zip -ErrorAction SilentlyContinue
 
 $files = @(
     (Join-Path $release 'QuickLook.Plugin.PowerPointNativeViewer.dll'),
-    (Join-Path $release 'QuickLook.Plugin.Metadata.config'),
-    (Join-Path $release 'Microsoft.Web.WebView2.Core.dll'),
-    (Join-Path $release 'Microsoft.Web.WebView2.Wpf.dll'),
-    (Join-Path $root 'lib\webview2\runtimes\win-x64\native\WebView2Loader.dll')
+    (Join-Path $release 'QuickLook.Plugin.Metadata.config')
 )
 
 $staging = Join-Path $root 'obj\package'

@@ -12,6 +12,7 @@ It is a higher-fidelity alternative to `QuickLook.Plugin.OfficeViewer` (Syncfusi
 - Renders slides to images via Microsoft PowerPoint COM automation (opened read-only) and shows them in a pure WPF viewer, so visual fidelity matches PowerPoint itself
 - **Up/Down file navigation works** — while previewing, pressing Up/Down switches to the previous/next file in Explorer just like any other QuickLook preview (verified end-to-end). The image surface does not steal foreground focus, so Explorer stays in control of the selection
 - Previous/next **slide** buttons inside the preview, and pre-renders the next slide for faster paging
+- Single, image-only preview path — no WebView2/PDF/Shell-handler dependencies
 - Leaves the original PowerPoint file untouched (read-only)
 - Installs side-by-side with the original OfficeViewer plugin
 - Uses `Priority = 100` so it takes over PowerPoint files, while Word/Excel stay with other plugins
@@ -19,19 +20,10 @@ It is a higher-fidelity alternative to `QuickLook.Plugin.OfficeViewer` (Syncfusi
 
 ## Limitations
 
-- The default image mode renders slides as pictures, so **slide text cannot be selected or copied**
+- Slides are rendered as images, so **slide text cannot be selected or copied**
 - Requires Microsoft PowerPoint to be installed and COM-registered on Windows
-- The first preview of an uncached or large file still needs a few seconds while PowerPoint starts and renders
+- The first preview of a large file still needs a few seconds while PowerPoint starts and renders
 - Sandbox build intended for personal use, not yet a polished release
-
-## Optional / retained code (not the default)
-
-The repository also keeps two earlier preview paths for a possible future *selectable-text* mode. They are **not** used by the default image viewer:
-
-- A Shell Preview Handler host (PowerToys Peek-style system preview)
-- A PowerPoint-to-PDF path shown in WebView2, with a persistent PDF cache keyed by file path/size/modified-time
-
-Enabling these would re-introduce native/WebView2 child windows, which is exactly what previously broke Up/Down navigation, so they are kept dormant by design. The PDF path additionally needs the Microsoft Edge WebView2 Runtime.
 
 ## Loading screen
 
@@ -63,28 +55,16 @@ Remove this folder and restart QuickLook:
 
 The original OfficeViewer plugin is not modified by this plugin.
 
-The persistent PDF cache (only created if the non-default PDF mode is used) is stored under:
-
-```text
-%LOCALAPPDATA%\QuickLook.PowerPointNativeViewer\pdf-cache
-```
+Temporary render images are written under `%TEMP%\QuickLook.PowerPointNativeViewer` and are cleaned up automatically when a preview closes (and on plugin startup for stale folders).
 
 ## Build Notes
 
-This project targets .NET Framework 4.6.2 and references QuickLook's `QuickLook.Common.dll` plus Microsoft WebView2 SDK assemblies.
+This project targets .NET Framework 4.6.2 and references QuickLook's `QuickLook.Common.dll`.
 
 Before building locally, copy `QuickLook.Common.dll` into:
 
 ```text
 lib/QuickLook.Common.dll
-```
-
-Also place the WebView2 SDK assemblies in:
-
-```text
-lib/webview2/Microsoft.Web.WebView2.Core.dll
-lib/webview2/Microsoft.Web.WebView2.Wpf.dll
-lib/webview2/runtimes/win-x64/native/WebView2Loader.dll
 ```
 
 Then run:
@@ -96,4 +76,4 @@ powershell -ExecutionPolicy Bypass -File scripts/pack-zip.ps1
 
 ## Status
 
-Working sandbox build. The default image-preview path is verified: PowerPoint slides render correctly and QuickLook Up/Down file navigation works while previewing. The selectable-text (Shell/PDF) paths remain experimental and disabled by default.
+Working sandbox build. The image-preview path is verified: PowerPoint slides render correctly and QuickLook Up/Down file navigation works while previewing. The earlier PDF/WebView2 and Shell Preview Handler experiments have been removed in favor of this single image-only mode.

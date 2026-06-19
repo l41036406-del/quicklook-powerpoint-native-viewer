@@ -17,7 +17,6 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
         public void Init()
         {
             PowerPointImagePreviewControl.CleanupOldSessions();
-            PowerPointPdfPreviewControl.CleanupOldSessions();
         }
 
         public bool CanHandle(string path)
