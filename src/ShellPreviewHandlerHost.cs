@@ -19,6 +19,10 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
         private const int WsVisible = 0x10000000;
         private const uint SwpNoZOrder = 0x0004;
         private const uint SwpNoActivate = 0x0010;
+        private const int WmKeyDown = 0x0100;
+        private const int WmSysKeyDown = 0x0104;
+        private const int VkUp = 0x26;
+        private const int VkDown = 0x28;
 
         private static readonly WindowProc HostWindowProc = DefWndProc;
         private static bool _windowClassRegistered;
@@ -161,6 +165,9 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             if (_previewHandler == null)
                 return base.TranslateAcceleratorCore(ref msg, modifiers);
 
+            if (IsQuickLookNavigationKey(msg, modifiers))
+                return false;
+
             var nativeMsg = new NativeMsg
             {
                 Hwnd = msg.hwnd,
@@ -186,6 +193,18 @@ namespace QuickLook.Plugin.PowerPointNativeViewer
             {
                 Marshal.FreeHGlobal(ptr);
             }
+        }
+
+        private static bool IsQuickLookNavigationKey(MSG msg, ModifierKeys modifiers)
+        {
+            if (modifiers != ModifierKeys.None)
+                return false;
+
+            if (msg.message != WmKeyDown && msg.message != WmSysKeyDown)
+                return false;
+
+            var key = msg.wParam.ToInt32();
+            return key == VkUp || key == VkDown;
         }
 
         private void FocusPreviewHandler()

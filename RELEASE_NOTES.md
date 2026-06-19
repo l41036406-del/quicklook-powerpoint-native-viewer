@@ -59,6 +59,7 @@ Adds a PowerToys Peek-inspired Shell Preview Handler path before the PDF fallbac
 - Initializes handlers through `IInitializeWithFile`, `IInitializeWithStream`, or `IInitializeWithItem`.
 - Uses the system preview path first, then falls back to the existing cached PDF/WebView2 pipeline if the handler is unavailable or fails.
 - Keeps the persistent PDF cache and WebView2 cleanup behavior from `v0.3.0-sandbox`.
+- Leaves plain Up/Down arrow keys for QuickLook file navigation instead of forwarding them to the Shell Preview Handler.
 
 Known limitations:
 
